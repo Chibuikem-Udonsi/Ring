@@ -1,0 +1,19 @@
+{
+  "name": "ring",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js",
+    "brief": "node src/index.js"
+  },
+  "dependencies": {
+    "@google/genai": "^2.9.0",
+    "dotenv": "^16.4.5",
+    "firebase-admin": "^12.2.0",
+    "node-cron": "^4.4.1",
+    "rss-parser": "^3.13.0",
+    "web-push": "^3.6.7"
+  }
+}

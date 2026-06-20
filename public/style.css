@@ -1,0 +1,758 @@
+/* Ring PWA — Morning Paper Redesign */
+
+/* ---------------------------------------------------- */
+/* 1. Design System & CSS Variables                     */
+/* ---------------------------------------------------- */
+:root {
+  /* Morning Paper Palette */
+  --linen: #F5F0EB;
+  --ink: #1A1A2E;
+  --slate: #6B6B7B;
+  --dawn: #D4654A;
+  --wash: #E8E0D6;
+  --daybreak: #F7C948;
+
+  /* Semantic Mappings */
+  --bg-page: var(--linen);
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #FDFBF8;
+  --border-color: var(--wash);
+  --text-primary: var(--ink);
+  --text-secondary: var(--slate);
+  --text-tertiary: #918F9A;
+
+  /* Flagged / Important */
+  --bg-flagged: #FEF7F0;
+  --border-flagged: var(--dawn);
+  --text-flagged-badge: #FFFFFF;
+
+  /* System */
+  --status-online: #2D8A56;
+  --status-offline: #C0392B;
+  --font-display: 'Instrument Serif', serif;
+  --font-body: 'Source Sans 3', 'Source Sans Pro', sans-serif;
+  --font-utility: 'JetBrains Mono', monospace;
+  --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+}
+
+/* ---------------------------------------------------- */
+/* 2. Reduced Motion                                    */
+/* ---------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------------------------------------------------- */
+/* 3. Reset & Core Layout                               */
+/* ---------------------------------------------------- */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 16px;
+  line-height: 1.6;
+  padding-top: var(--safe-area-inset-top);
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.app-container {
+  width: 100%;
+  max-width: 600px;
+  padding: 0 20px 48px 20px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ---------------------------------------------------- */
+/* 4. Focus States (Accessibility)                      */
+/* ---------------------------------------------------- */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--dawn);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ---------------------------------------------------- */
+/* 5. Offline Banner                                    */
+/* ---------------------------------------------------- */
+.offline-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: var(--ink);
+  color: var(--linen);
+  text-align: center;
+  padding: 10px 16px;
+  font-family: var(--font-utility);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(0); }
+}
+
+/* ---------------------------------------------------- */
+/* 6. Header / Masthead                                 */
+/* ---------------------------------------------------- */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 28px 0 0 0;
+  margin-bottom: 8px;
+}
+
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* The Ring Mark — hand-drawn circle SVG */
+.ring-mark {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.ring-mark-path {
+  fill: none;
+  stroke: var(--daybreak);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  transition: stroke 0.4s ease;
+}
+
+.ring-mark-path.stale {
+  stroke: var(--slate);
+}
+
+.logo-text {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  color: var(--text-primary);
+}
+
+.refresh-btn {
+  background: transparent;
+  border: 1.5px solid var(--wash);
+  color: var(--slate);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  margin-top: 2px;
+}
+
+.refresh-btn:hover {
+  border-color: var(--dawn);
+  color: var(--dawn);
+}
+
+.refresh-btn:active {
+  transform: scale(0.92);
+}
+
+.refresh-icon {
+  transition: transform 0.6s ease;
+}
+
+.refresh-btn.spinning .refresh-icon {
+  transform: rotate(360deg);
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------- */
+/* 7. Masthead Date Section                             */
+/* ---------------------------------------------------- */
+.meta-section {
+  margin-bottom: 32px;
+  text-align: center;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--wash);
+}
+
+.meta-date {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 400;
+  color: var(--text-primary);
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+.meta-time {
+  font-family: var(--font-utility);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+/* ---------------------------------------------------- */
+/* 8. Section Headers                                   */
+/* ---------------------------------------------------- */
+.category-section {
+  margin-bottom: 36px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 16px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--wash);
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-icon {
+  font-size: 16px;
+}
+
+.item-count {
+  font-family: var(--font-utility);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+}
+
+/* ---------------------------------------------------- */
+/* 9. News Cards                                        */
+/* ---------------------------------------------------- */
+.items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.news-card {
+  background-color: transparent;
+  border-bottom: 1px solid var(--wash);
+  border-radius: 0;
+  padding: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+  transition: var(--transition-smooth);
+}
+
+.news-card:last-child {
+  border-bottom: none;
+}
+
+.news-card:hover {
+  background-color: var(--bg-card-hover);
+  padding-left: 12px;
+  padding-right: 12px;
+  margin-left: -12px;
+  margin-right: -12px;
+  border-radius: 6px;
+}
+
+.card-summary {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.65;
+  color: var(--text-primary);
+}
+
+.card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2px;
+}
+
+.source-badge {
+  font-family: var(--font-utility);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+  max-width: 70%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.read-link {
+  font-family: var(--font-utility);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--dawn);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  letter-spacing: 0.02em;
+  transition: color 0.15s ease;
+}
+
+.news-card:hover .read-link {
+  color: var(--ink);
+}
+
+/* ---------------------------------------------------- */
+/* 10. Flagged / Important Cards                        */
+/* ---------------------------------------------------- */
+.news-card.flagged {
+  background-color: var(--bg-flagged);
+  border-left: 3px solid var(--dawn);
+  border-bottom: 1px solid var(--wash);
+  padding: 16px 16px 16px 16px;
+  margin-left: -3px;
+  border-radius: 0 6px 6px 0;
+  position: relative;
+}
+
+.news-card.flagged:hover {
+  background-color: #FDF0E6;
+  padding-left: 16px;
+  margin-left: -3px;
+  margin-right: 0;
+}
+
+.news-card.flagged .card-summary {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.55;
+  color: var(--text-primary);
+}
+
+.news-card.flagged .source-badge {
+  color: var(--dawn);
+}
+
+.news-card.flagged .read-link {
+  color: var(--dawn);
+  font-weight: 600;
+}
+
+.flagged-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-utility);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  background-color: var(--dawn);
+  color: var(--text-flagged-badge);
+  padding: 3px 8px;
+  border-radius: 3px;
+  align-self: flex-start;
+  text-transform: uppercase;
+}
+
+/* ---------------------------------------------------- */
+/* 11. Fold Line — Show More                            */
+/* ---------------------------------------------------- */
+.expanded-items-wrapper {
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+}
+
+.expanded-items-wrapper.show {
+  max-height: 5000px;
+  opacity: 1;
+}
+
+.show-more-btn {
+  background: transparent;
+  border: none;
+  border-top: 1px dashed var(--wash);
+  border-bottom: 1px dashed var(--wash);
+  color: var(--text-secondary);
+  font-family: var(--font-utility);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  width: 100%;
+  padding: 14px 0;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.show-more-btn:hover {
+  color: var(--dawn);
+  border-color: var(--dawn);
+}
+
+.toggle-arrow {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.show-more-btn[aria-expanded="true"] .toggle-arrow {
+  transform: rotate(180deg);
+}
+
+/* ---------------------------------------------------- */
+/* 12. Skeletons & Loading                              */
+/* ---------------------------------------------------- */
+.skeleton-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+}
+
+.skeleton-card {
+  height: 80px;
+  background-color: var(--wash);
+  border-bottom: 1px solid var(--linen);
+  border-radius: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-card::after {
+  content: '';
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  transform: translateX(-100%);
+  animation: loadingShimmer 1.5s infinite;
+}
+
+@keyframes loadingShimmer {
+  100% { transform: translateX(100%); }
+}
+
+/* ---------------------------------------------------- */
+/* 13. Error / Empty State                              */
+/* ---------------------------------------------------- */
+.error-state {
+  text-align: center;
+  padding: 40px 20px;
+  border: 1px dashed var(--wash);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--text-primary);
+}
+
+.error-desc {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text-secondary);
+  max-width: 320px;
+  line-height: 1.5;
+}
+
+/* ---------------------------------------------------- */
+/* 14. Footer                                           */
+/* ---------------------------------------------------- */
+.app-footer {
+  margin-top: auto;
+  padding: 32px 0 16px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid var(--wash);
+}
+
+.app-footer p {
+  font-family: var(--font-utility);
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.db-indicator {
+  font-family: var(--font-utility);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background-color: var(--wash);
+  padding: 4px 10px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.db-indicator::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  background-color: var(--text-secondary);
+}
+
+.db-indicator.firebase {
+  background-color: rgba(45, 138, 86, 0.08);
+  color: var(--status-online);
+  border: 1px solid rgba(45, 138, 86, 0.15);
+}
+
+.db-indicator.firebase::before {
+  background-color: var(--status-online);
+}
+
+.db-indicator.local {
+  background-color: rgba(107, 107, 123, 0.08);
+  color: var(--slate);
+  border: 1px solid rgba(107, 107, 123, 0.15);
+}
+
+.db-indicator.local::before {
+  background-color: var(--slate);
+}
+
+/* ---------------------------------------------------- */
+/* 15. Responsive Adjustments                           */
+/* ---------------------------------------------------- */
+@media (max-width: 380px) {
+  .meta-date {
+    font-size: 26px;
+  }
+
+  .section-title {
+    font-size: 20px;
+  }
+
+  .app-container {
+    padding: 0 16px 40px 16px;
+  }
+}
+
+@media (min-width: 601px) {
+  .app-container {
+    padding: 0 32px 48px 32px;
+  }
+}
+
+/* ---------------------------------------------------- */
+/* 16. Notification Permission Banner (M3)              */
+/* ---------------------------------------------------- */
+.notification-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: linear-gradient(135deg, #1A1A2E 0%, #2D2B55 100%);
+  color: #F5F0EB;
+  padding: 14px 20px;
+  z-index: 999;
+  transform: translateY(-100%);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.notification-banner.show {
+  transform: translateY(0);
+}
+
+.notification-banner-content {
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.notification-banner-text {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.notification-banner-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.notification-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.notification-enable-btn {
+  background-color: var(--dawn);
+  color: #FFFFFF;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-family: var(--font-utility);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  white-space: nowrap;
+}
+
+.notification-enable-btn:hover {
+  background-color: #B8503E;
+  transform: scale(1.02);
+}
+
+.notification-enable-btn:active {
+  transform: scale(0.96);
+}
+
+.notification-dismiss-btn {
+  background: transparent;
+  border: 1px solid rgba(245, 240, 235, 0.25);
+  color: rgba(245, 240, 235, 0.7);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  transition: var(--transition-smooth);
+}
+
+.notification-dismiss-btn:hover {
+  border-color: rgba(245, 240, 235, 0.5);
+  color: #F5F0EB;
+}
+
+/* ---------------------------------------------------- */
+/* 17. Alert Highlight Pulse (M3)                       */
+/* ---------------------------------------------------- */
+.alert-highlight {
+  animation: alertPulse 2s ease-in-out 2;
+  position: relative;
+}
+
+@keyframes alertPulse {
+  0%, 100% {
+    background-color: transparent;
+    box-shadow: none;
+  }
+  50% {
+    background-color: rgba(247, 201, 72, 0.15);
+    box-shadow: inset 0 0 0 2px var(--daybreak);
+    border-radius: 6px;
+  }
+}
+
+/* ---------------------------------------------------- */
+/* 18. Toast Notification (M3)                          */
+/* ---------------------------------------------------- */
+.alert-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background-color: var(--ink);
+  color: var(--linen);
+  font-family: var(--font-utility);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 12px 24px;
+  border-radius: 24px;
+  z-index: 1001;
+  opacity: 0;
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.alert-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+

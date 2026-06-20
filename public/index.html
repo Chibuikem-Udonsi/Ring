@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Ring — Your Morning Brief</title>
+  
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Ring: a personal daily news briefing. General news, tech, and AI — curated and summarized every morning.">
+  <meta name="theme-color" content="#F5F0EB">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Ring">
+  
+  <!-- PWA Manifest & Icons -->
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="shortcut icon" href="/icons/icon-192.png" type="image/png">
+  
+  <!-- Typography (Google Fonts) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Source+Sans+3:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <!-- Offline Banner -->
+  <div id="offline-banner" class="offline-banner hidden">
+    <span>○</span> Viewing cached brief — you are offline
+  </div>
+
+  <!-- Notification Permission Banner (M3: Real-Time Alerts) -->
+  <div id="notification-banner" class="notification-banner" style="display:none">
+    <div class="notification-banner-content">
+      <div class="notification-banner-text">
+        <span class="notification-banner-icon">🔔</span>
+        <span>Get alerted when something big happens</span>
+      </div>
+      <div class="notification-banner-actions">
+        <button id="enable-notifications-btn" class="notification-enable-btn">Enable Alerts</button>
+        <button id="dismiss-notifications-btn" class="notification-dismiss-btn" aria-label="Dismiss">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo-area">
+        <!-- Ring Mark SVG — hand-drawn imperfect circle -->
+        <svg class="ring-mark" viewBox="0 0 40 40" aria-hidden="true">
+          <path class="ring-mark-path" d="M20 4 C28 3.5, 36 10, 37 19 C38 28, 31 36, 22 37 C13 38, 5 31, 4 22 C3 13, 9 5.5, 20 4" />
+        </svg>
+        <h1 class="logo-text" id="logo">Ring</h1>
+      </div>
+      <button id="refresh-button" class="refresh-btn" aria-label="Refresh brief">
+        <svg class="refresh-icon" viewBox="0 0 24 24" width="18" height="18">
+          <path fill="currentColor" d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Masthead Date -->
+    <div class="meta-section" id="meta-section">
+      <div class="meta-date" id="brief-date">Loading brief…</div>
+      <div class="meta-time" id="brief-timestamp">Checking feeds</div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="brief-main" id="brief-main">
+      
+      <!-- Tech & AI Section (Primary Focus) -->
+      <section class="category-section" id="tech-ai-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <span class="section-icon">⚡</span> Tech & AI
+          </h2>
+          <span class="item-count" id="tech-ai-count">0 items</span>
+        </div>
+        
+        <!-- Tech/AI items container -->
+        <div class="items-list" id="tech-ai-list">
+          <div class="skeleton-container">
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+          </div>
+        </div>
+        
+        <!-- Expandable container for trimmed items -->
+        <div class="expanded-items-wrapper hidden" id="tech-ai-expanded-wrapper">
+          <div class="items-list" id="tech-ai-expanded-list"></div>
+        </div>
+        
+        <!-- Show More Button -->
+        <button class="show-more-btn hidden" id="tech-ai-toggle" aria-expanded="false">
+          <span class="toggle-text">Show More</span>
+          <svg class="toggle-arrow" viewBox="0 0 24 24" width="14" height="14">
+            <path fill="currentColor" d="M7 10l5 5 5-5H7z"/>
+          </svg>
+        </button>
+      </section>
+
+      <!-- General News Section -->
+      <section class="category-section" id="general-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <span class="section-icon">🌍</span> General
+          </h2>
+          <span class="item-count" id="general-count">0 items</span>
+        </div>
+        
+        <!-- General items container -->
+        <div class="items-list" id="general-list">
+          <div class="skeleton-container">
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+          </div>
+        </div>
+        
+        <!-- Expandable container for trimmed items -->
+        <div class="expanded-items-wrapper hidden" id="general-expanded-wrapper">
+          <div class="items-list" id="general-expanded-list"></div>
+        </div>
+        
+        <!-- Show More Button -->
+        <button class="show-more-btn hidden" id="general-toggle" aria-expanded="false">
+          <span class="toggle-text">Show More</span>
+          <svg class="toggle-arrow" viewBox="0 0 24 24" width="14" height="14">
+            <path fill="currentColor" d="M7 10l5 5 5-5H7z"/>
+          </svg>
+        </button>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>Ring · Your morning brief</p>
+      <div class="db-indicator" id="db-indicator">Status: Offline</div>
+    </footer>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
