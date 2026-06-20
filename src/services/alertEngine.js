@@ -1,7 +1,5 @@
-import { fetchAllRssFeeds } from '../sources/rss.js';
-import { fetchGeneralNews } from '../sources/newsapi.js';
-import { generateDailyBrief } from './llm.js';
-import { isItemSeen, markItemSeen, saveSeen, loadSeen, getSeenCount } from './seenStore.js';
+import { fetchAndSummarizeNews } from './briefService.js';
+import { isItemSeen, markItemSeen, saveSeen, getSeenCount } from './seenStore.js';
 import { canSendAlert, sendAlert, getAlertCountToday, getMaxAlertsPerDay } from './pushService.js';
 
 let isPolling = false;
@@ -23,22 +21,13 @@ export async function runAlertPoll() {
   console.log('===================================================');
 
   try {
-    // 1. Fetch raw articles
-    console.log('[AlertEngine] Fetching news sources...');
-    const rssNews = await fetchAllRssFeeds();
-    const generalNews = await fetchGeneralNews(process.env.NEWS_API_KEY);
-    const combinedNews = [...rssNews, ...generalNews];
+    console.log('[AlertEngine] Fetching and summarizing news...');
+    const brief = await fetchAndSummarizeNews();
 
-    console.log(`[AlertEngine] Aggregated ${combinedNews.length} raw articles.`);
-
-    if (combinedNews.length === 0) {
+    if (!brief) {
       console.log('[AlertEngine] No articles fetched. Ending poll.');
       return { newItems: 0, alertsSent: 0 };
     }
-
-    // 2. Summarize via LLM
-    console.log('[AlertEngine] Summarizing via Gemini...');
-    const brief = await generateDailyBrief(combinedNews);
 
     // 3. Check all tech/AI items for new, flagged content
     const allItems = [

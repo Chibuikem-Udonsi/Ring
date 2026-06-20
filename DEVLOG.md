@@ -110,3 +110,22 @@
 - **Stateless Firebase Persistence**: Migrated seen items, push subscriptions, and alert logs to Firebase Realtime Database when configured. Since Render free-tier containers spin down and have ephemeral storage, this prevents loss of subscribers and duplicate alert pushes on restarts.
 - **Trigger Token Authentication**: Added optional Bearer token authorization to `POST /api/poll/trigger`. Because this endpoint is exposed publicly on Render, securing it protects the Gemini API and NewsAPI key quotas from third-party spam.
 - **External Keep-Alive Recommendation**: Render's free tier sleeps after 15 minutes of inactivity (no HTTP traffic). Since node-cron cannot keep the service active internally, we recommend hitting `/api/health` or `/` every 10 minutes via UptimeRobot to ensure continuous 24/7 background polling and alerts.
+
+## 2026-06-20 — M4: Cloud Deployment — Schedule Daily Briefs & Code Sharing
+
+### What was built/changed
+- Extracted shared news ingestion (RSS + NewsAPI) and LLM summarization logic into a new service module: [briefService.js](file:///c:/Users/kamsi/Downloads/Ring/src/services/briefService.js).
+- Refactored [alertEngine.js](file:///c:/Users/kamsi/Downloads/Ring/src/services/alertEngine.js) to import and call `fetchAndSummarizeNews` from `briefService.js`, eliminating duplicate fetch and LLM logic.
+- Refactored [index.js](file:///c:/Users/kamsi/Downloads/Ring/src/index.js) (triggered by `npm run brief`) to use the new shared `generateAndSaveDailyBrief` function.
+- Updated [scheduler.js](file:///c:/Users/kamsi/Downloads/Ring/src/services/scheduler.js) to schedule the daily brief cron daily at 6:00 AM WAT (Africa/Lagos timezone) using `node-cron`.
+- Configured [scheduler.js](file:///c:/Users/kamsi/Downloads/Ring/src/services/scheduler.js) to trigger an initial daily brief generation 5 seconds after server startup, ensuring briefs are immediately available on fresh deployments.
+- Cleaned up jobs on server shutdown by stopping both the alert poller and daily brief scheduler.
+
+### Errors hit and how they were resolved
+- **Local Port Conflict (`EADDRINUSE`)**: Ran into port 3000 conflict during server verification because the port was already bound. Resolved by setting `PORT=3001` in the PowerShell startup script.
+- **Gemini API Key Quota Exhausted**: Encountered `RESOURCE_EXHAUSTED` (Quota exceeded) on the free tier during local testing. Verified that the fallback mechanism worked correctly, falling back gracefully to mock daily briefs, saving them to storage, and successfully serving them via `/api/brief/latest`.
+
+### Decisions made and why
+- **Shared Code Extraction**: Grouped the common fetching and LLM summarization pipeline into `briefService.js` to prevent code drift and ensure alert candidate selection and daily briefs always reflect the exact same parsed news feed.
+- **WAT Timezone for Brief Cron**: Explicitly set the timezone to `Africa/Lagos` in `node-cron` configuration matching Kamsi's local timezone (West Africa Time) for the 6:00 AM run.
+
